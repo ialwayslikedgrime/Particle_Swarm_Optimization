@@ -1,0 +1,7 @@
+dill==0.4.0
+joblib==1.5.1
+numpy==2.2.6
+scikit-learn==1.7.1
+scipy==1.15.3
+softpy==0.1.2
+threadpoolctl==3.6.0

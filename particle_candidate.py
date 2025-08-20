@@ -21,28 +21,42 @@ class ParticleCandidate(FloatVectorCandidate):
             return validated_array
         except (ValueError, TypeError) as e:
             raise ValueError(f"{param_name} contains invalid values that cannot be converted to float")
+    
 
 
-
-    # valori default da rivedersi. permette di non doverli imputare ogni singola volta ma non scritti da nessuna parte.
-    def __init__(self, size: int, lower, upper, candidate, velocity, inertia=0.9, wl=0.4, wn=0.3, wg=0.3):
-        # Size validation
+    def _validate_size(size):
+        
         if not isinstance(size, int):
             raise TypeError("size should be an integer")
         elif size < 1:
             raise ValueError("the number of components should be at least 1")
 
-        super().__init__()
-        self.size = size
 
 
-        # Use helper function for all array validations
-        self.lower = self._validate_array_parameter(lower, size, "lower")
-        self.upper = self._validate_array_parameter(upper, size, "upper") 
-        self.candidate = self._validate_array_parameter(candidate, size, "candidate")
-        self.velocity = self._validate_array_parameter(velocity, size, "velocity")
+
+    # valori default da rivedersi. permette di non doverli imputare ogni singola volta ma non scritti da nessuna parte.
+    def __init__(self, size: int, lower, upper, candidate, velocity, inertia=0.9, wl=0.4, wn=0.3, wg=0.3):
+
+        validated_size = self._validate_size(size)
+        validated_lower = self._validate_array_parameter(lower, size, lower)
+        validated_upper = self._validate_array_parameter(upper, size, upper)
+        validated_candidate = self._validate_array_parameter(candidate, size, "candidate")
+        validated_velocity = self._validate_array_parameter(velocity, size, "velocity")
+
+        
 
 
+        super().__init__(size = validated_size, lower = validated_lower, upper = validated_upper, candidate = validated_candidate, velocity=validated_velocity):
+
+
+# the plan is that i am going to implement the validation logic before the super. 
+# it means we recognize that in the mutate method there is some vlaidation stuff. in the sense that it would break there.
+# i understand that under an academic environment no one is so stupid to give the wrong parameters and they must know what they are doing
+# and not writing down the validation or every single parameter inserted with trial and error makes the code and the library with less unneccesary complexity
+# yet for the exercise I will implement it as a good software engineering behaviour. this makes it possible for the user to have feedback immediately
+# i feel it is better when thinking about debugging. about knowing immediately where the mistkae is. without the need for the program to run and arrive
+# until the mutate part.  
+# i am going to do inititally. then i will inherent the parent class, to make sure we are coherent with the library. passing these validated parameters.
 
 
 

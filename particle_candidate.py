@@ -3,16 +3,52 @@ from softpy import FloatVectorCandidate
 
 
 class ParticleCandidate(FloatVectorCandidate):
-    def __init__(self, size, lower, upper, candidate, velocity, inertia=0.9, wl=0.4, wn=0.3, wg=0.3):
-        # valori default da rivedersi. permette di non doverli imputare ogni singola volta ma non scritti da nessuna parte.
+            
+    def _validate_array_parameter(self, parameter, size, param_name):
+        """function to validate array parameters with consistent logic."""
+        
+        # Check if it's a list or numpy array
+        if not isinstance(parameter, (list, np.ndarray)):
+            raise TypeError(f"{param_name} should be a list or numpy array")
+        
+        # Check if it has the correct size
+        elif len(parameter) != size:
+            raise ValueError(f"{param_name} should have exactly {size} elements but it actually has {len(parameter)}")
+        
+        # Try to convert to numpy array with float dtype
+        try:
+            validated_array = np.array(parameter, dtype=float)
+            return validated_array
+        except (ValueError, TypeError) as e:
+            raise ValueError(f"{param_name} contains invalid values that cannot be converted to float")
+
+
+
+    # valori default da rivedersi. permette di non doverli imputare ogni singola volta ma non scritti da nessuna parte.
+    def __init__(self, size: int, lower, upper, candidate, velocity, inertia=0.9, wl=0.4, wn=0.3, wg=0.3):
+        # Size validation
+        if not isinstance(size, int):
+            raise TypeError("size should be an integer")
+        elif size < 1:
+            raise ValueError("the number of components should be at least 1")
 
         super().__init__()
-
         self.size = size
-        self.lower = np.array(lower, dtype = float)
-        self.upper = np.array(upper, dtype = float)
-        self.candidate = np.array(candidate, dtype = float)
-        self.velocity = np.array(velocity, dtype = float)
+
+
+        # Use helper function for all array validations
+        self.lower = self._validate_array_parameter(lower, size, "lower")
+        self.upper = self._validate_array_parameter(upper, size, "upper") 
+        self.candidate = self._validate_array_parameter(candidate, size, "candidate")
+        self.velocity = self._validate_array_parameter(velocity, size, "velocity")
+
+
+
+
+
+
+
+
 
         self.inertia = inertia # dtype = float. can I insert dype ?
         self.wl = wl

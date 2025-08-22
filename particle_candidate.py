@@ -214,20 +214,14 @@ class ParticleCandidate(FloatVectorCandidate):
         )
 
     def __str__(self):
-        """
-        String representation for debugging and visualization.
-        
-        This method isn't required by the assignment but demonstrates good
-        software engineering practice by making objects easier to inspect
-        and debug during development.
-        """
+        """ additional """
+     
         return (f"ParticleCandidate(position={self.candidate}, "
                 f"velocity={self.velocity}, fitness=?)")
 
     def __repr__(self):
-        """
-        Detailed representation for development and debugging.
-        """
+        """ additional """
+       
         return (f"ParticleCandidate(size={self.size}, "
                 f"position={self.candidate}, velocity={self.velocity}, "
                 f"inertia={self.inertia}, weights=({self.wl}, {self.wn}, {self.wg}))")

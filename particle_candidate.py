@@ -12,10 +12,15 @@ class ParticleCandidate(FloatVectorCandidate):
                  upper,
                  candidate,
                  velocity,
-                 inertia,
-                 wl,
-                 wn,
-                 wg):
+                 inertia = 0.729, # added default value also such that it doesn't crush later in the generate method
+                 wl = 1/3,
+                 wn = 1/3,
+                 wg = 1/3):
+        # the assignment felt a bit unclear on whether the weights had to be hardcoded as default value or had to be part of the init constructor.
+        # I just gave default values and let the user free to change their values.
+        
+        # should re watch the inertia default value , according to literature.
+
 
          # inserting here the parameters we are inheriting from the Parent Class (they are present in floatvectorcandidate):
          # now, our particlecandidate might have some parameters (or attributes ?) that we don't want to use, given the fact that our particlecandidate 
@@ -35,7 +40,64 @@ class ParticleCandidate(FloatVectorCandidate):
                          # mutate/recombine - I don't pass them. they are callable and I will ovverride them.
                          )
         
+        '''migliorare qui con la validation logic che avevo prima'''
+
+        # PSO-specific attributes (THIS WILL BE WHERE I CAN INSERT THE VALIDATION LOGIC )
+        self.velocity = np.asarray(velocity, dtype=float)
+        self.inertia  = float(inertia)
+        self.wl, self.wn, self.wg = float(wl), float(wn), float(wg)
+
+        if not np.isclose(self.wl + self.wn + self.wg, 1.0):
+            raise ValueError("wl + wn + wg must equal 1.0")
         
+
+        # ovverriding the methods we need:
+        def generate(self, size, lower, upper) -> ParticleCandidate:
+            candidate = np.random.uniform(lower, upper, size)
+
+            # should probably insert a try/except here 
+
+            span = np.abs(upper-lower)
+            negative_span = - span
+
+            velocity = np.random.uniform(negative_span, span)
+
+            return ParticleCandidate(size=size, lower=lower, upper=upper)
+
+
+
+        def mutate(self) -> ParticleCandidate:
+            self.candidate = self.candidate + self.velocity
+            return self  ## here i should consider wether adding some sort of constratint to not let the particles go wherever in the search space
+        
+        
+        def recombine(self, local_best, neighborhood_best, best):
+
+            # random vectors in [0,1]. scalar or vectors should both be acceptable
+            # we are generating vectors with random numbers between [0 included and 1 excluded]
+            # the number of dimensions of such vectors will be equals to size.
+            # in theory, in the book 1 was included. but apparently the standard is using np.random.rand anyway. could alternatively consider:
+
+            # rng = np.random.default_rng()
+            # rl = rng.integers(0, 2**53 + 1, size=self.size) / (2**53)  # float64 grid
+
+            # to make sure that the 1 is actually included.
+
+            rl = np.random.rand(self.size) 
+            rn = np.random.rand(self.size)
+            rg = np.random.rand(self.size)
+
+            self.velocity = (self.inertia * self.velocity)
+            + rl * self.wl * (self.candidate - self.local_best)
+            + rn * self.wn * (self.candidate - self.neighborhood_best)
+            + rg * self.wg * (self.candidate - self.best)
+
+            return self
+        
+
+        ## da qui. e ti chiedi. perrchè mutate e recombine prima del prossimo coso da implementare'?? (( dove poi in verità dovrai guardare decoratore etc.
+        # what does it mean with API lol.
+
 
 
 

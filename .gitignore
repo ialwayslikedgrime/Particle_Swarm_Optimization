@@ -6,3 +6,6 @@ env/
 # Byte-compiled / cache
 __pycache__/
 *.py[cod]
+
+gpt_particle_candidate.py
+test_particle.py

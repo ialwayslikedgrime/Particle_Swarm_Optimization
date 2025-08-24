@@ -4,81 +4,51 @@ from softpy import FloatVectorCandidate
 
 
 class ParticleCandidate(FloatVectorCandidate):
-    """
-    PSO particle implementation that inherits from FloatVectorCandidate.
-    """
-            
-    def _validate_array_parameter(self, parameter, size, param_name):
-        """function to validate array parameters with consistent logic.
+
+    # here all the parameters that we want
+    def __init__(self,
+                 size,
+                 lower,
+                 upper,
+                 candidate,
+                 velocity,
+                 inertia,
+                 wl,
+                 wn,
+                 wg):
+
+         # inserting here the parameters we are inheriting from the Parent Class (they are present in floatvectorcandidate):
+         # now, our particlecandidate might have some parameters (or attributes ?) that we don't want to use, given the fact that our particlecandidate 
+         # might for instance not need the dimension attribute.
+         # however, if we want to be consistent with the softpy interface, we need to use the method super() so that we inherit form the parent class the attributes
+         # and python does not run the init method again reinstatiang them
+         # while I can re initialize the methods generate etc for my own logic.
+        super().__init__(size = size, 
+                         candidate = candidate,
+                         lower = lower, 
+                         upper = upper,
+                         distribution=stats.uniform(loc=0, scale=0), # we know the PSO doens't use distribution specifically to ?mutate?
+                         # yet we need to pass this parameter to stay consistent with the sofpy interface. 
+                         # could have used a class zero distribution that basically returned 0s. I will use this, so that if someone passes extra
+                         # arguments it won't crush.
+                         intermediate = False
+                         # mutate/recombine - I don't pass them. they are callable and I will ovverride them.
+                         )
         
-         This validation serves as the first line of defense against malformed
-        inputs, providing clear error messages that help users understand
-        PSO requirements and constraints.
-        """
         
-        # Check if it's a list or numpy array
-        if not isinstance(parameter, (list, np.ndarray)):
-            raise TypeError(f"{param_name} should be a list or numpy array")
+
+
+
+
+        ## DA QUI
         
-        # Check if it has the correct size
-        elif len(parameter) != size:
-            raise ValueError(f"{param_name} should have exactly {size} elements but it actually has {len(parameter)}")
-        
-        # Try to convert to numpy array with float dtype
-        try:
-            validated_array = np.array(parameter, dtype=float)
-            return validated_array
-        except (ValueError, TypeError) as e:
-            raise ValueError(f"{param_name} contains invalid values that cannot be converted to float")
-    
-
-    @staticmethod
-    def _validate_size(size):
-        """
-        Static method to validate the size parameter.
-        """
-         
-        if not isinstance(size, int):
-            raise TypeError("size should be an integer")
-        elif size < 1:
-            raise ValueError("the number of components should be at least 1")
-        return size
+        # attributes that there are not in the parent class: " velocity, inertia, wl, wn, wg
 
 
 
-   # valori default da rivedersi. permette di non doverli imputare ogni singola volta ma non scritti da nessuna parte.
-    def __init__(self, size: int, lower, upper, candidate, velocity, inertia=0.9, wl=0.4, wn=0.3, wg=0.3):
-        """
-        Constructor for PSO particles.
-
-        This constructor demonstrates the layered approach to object creation:
-        1. First, validate all inputs to catch problems early
-        2. Then, call the parent constructor to set up basic structure
-        3. Finally, add PSO-specific attributes and constraints
-        """
-
-        # Layer 1: Input validation - catch problems before they propagate
-        validated_size = self._validate_size(size)
-        validated_lower = self._validate_array_parameter(lower, size, "lower")
-        validated_upper = self._validate_array_parameter(upper, size, "upper")
-        validated_candidate = self._validate_array_parameter(candidate, size, "candidate")
-        validated_velocity = self._validate_array_parameter(velocity, size, "velocity")
-
-
-        # Layer 2: Call parent constructor to establish inheritance relationship
-
-        super().__init__(size = validated_size, 
-                         candidate = validated_candidate,
-                         distribution=stats.norm(0, 1),  # Dummy distribution - PSO won't use this
-                         lower = validated_lower,
-                         upper = validated_upper,
-                         intermediate=False,  # PSO doesn't use intermediate recombination
-                         mutate=None,        # We'll override with PSO-specific mutate
-                         recombine=None      # We'll override with PSO-specific recombine  
-                )
         
         # Layer 3: Add PSO-specific attributes
-        self.velocity = validated_velocity
+        self.velocity = velocity
         self.inertia = inertia
         self.wl = wl
         self.wn = wn

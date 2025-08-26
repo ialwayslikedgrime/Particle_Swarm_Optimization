@@ -22,7 +22,9 @@ class ParticleCandidate(FloatVectorCandidate):
         # should re watch the inertia default value , according to literature.
 
 
-         # inserting here the parameters we are inheriting from the Parent Class (they are present in floatvectorcandidate):
+         # inserting here the parameters we are inheriting fr
+         # 
+         # om the Parent Class (they are present in floatvectorcandidate):
          # now, our particlecandidate might have some parameters (or attributes ?) that we don't want to use, given the fact that our particlecandidate 
          # might for instance not need the dimension attribute.
          # however, if we want to be consistent with the softpy interface, we need to use the method super() so that we inherit form the parent class the attributes
@@ -52,7 +54,8 @@ class ParticleCandidate(FloatVectorCandidate):
         
 
         # ovverriding the methods we need:
-        def generate(self, size, lower, upper) -> ParticleCandidate:
+        def generate(size: int, lower : np.ndarray, upper : np.ndarray) -> ParticleCandidate:
+
             candidate = np.random.uniform(lower, upper, size)
 
             # should probably insert a try/except here 
@@ -60,17 +63,22 @@ class ParticleCandidate(FloatVectorCandidate):
             span = np.abs(upper-lower)
             negative_span = - span
 
-            velocity = np.random.uniform(negative_span, span)
+            velocity = np.random.uniform(negative_span, span, size = size)
 
-            return ParticleCandidate(size=size, lower=lower, upper=upper)
+            return ParticleCandidate(size, lower, upper, candidate, velocity)
 
 
+# i guess here we are makind the position update
 
         def mutate(self) -> ParticleCandidate:
-            self.candidate = self.candidate + self.velocity
-            return self  ## here i should consider wether adding some sort of constratint to not let the particles go wherever in the search space
+            candidate = self.candidate + self.velocity
+
+            # Apply boundary constraints to keep particle within search space
+            # # Using clipping to ensure particles don't leave the allowed region
+            candidate = np.clip(candidate, self.lower, self.upper)
+            return ParticleCandidate(size = self.size, lower = self.lower, upper = self.upper, candidate = candidate, velocity = self.velocity, inertia=self.inertia, wl=self.wl, wn=self.wn, wg=self.wg)  ## here i should consider wether adding some sort of constratint to not let the particles go wherever in the search space
         
-        
+
         def recombine(self, local_best, neighborhood_best, best):
 
             # random vectors in [0,1]. scalar or vectors should both be acceptable
@@ -87,12 +95,12 @@ class ParticleCandidate(FloatVectorCandidate):
             rn = np.random.rand(self.size)
             rg = np.random.rand(self.size)
 
-            self.velocity = (self.inertia * self.velocity)
+            velocity = (self.inertia * self.velocity)
             + rl * self.wl * (self.candidate - self.local_best)
             + rn * self.wn * (self.candidate - self.neighborhood_best)
             + rg * self.wg * (self.candidate - self.best)
 
-            return self
+            return ParticleCandidate(self, se)
         
 
         ## da qui. e ti chiedi. perrchè mutate e recombine prima del prossimo coso da implementare'?? (( dove poi in verità dovrai guardare decoratore etc.

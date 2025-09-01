@@ -1,7 +1,8 @@
 import numpy as np
 import scipy.stats as stats
 from softpy import FloatVectorCandidate
-
+from softpy.evolutionary.singlestate import MetaHeuristicsAlgorithm
+import numpy as np
 
 class ParticleCandidate(FloatVectorCandidate):
     """
@@ -143,10 +144,17 @@ class ParticleCandidate(FloatVectorCandidate):
         rn = np.random.rand(self.size)
         rg = np.random.rand(self.size)
 
-        new_velocity = (self.inertia * self.velocity) \
+        '''formula as it is written on the assignment, but I suspect it should be the opposite? or the particle will continue to move away
+         from the opimal solution ?  '''
+        '''new_velocity = (self.inertia * self.velocity) \
             + rl * self.wl * (self.candidate - local_best.candidate) \
             + rn * self.wn * (self.candidate - neighborhood_best.candidate) \
-            + rg * self.wg * (self.candidate - best.candidate)
+            + rg * self.wg * (self.candidate - best.candidate) '''
+        
+        new_velocity = (self.inertia * self.velocity) \
+            + rl * self.wl * (local_best.candidate - self.candidate) \
+            + rn * self.wn * (neighborhood_best.candidate - self.candidate) \
+            + rg * self.wg * (best.candidate - self.candidate)
 
         return ParticleCandidate(self.size,
                                  self.lower,
@@ -158,3 +166,83 @@ class ParticleCandidate(FloatVectorCandidate):
 ## da qui. e ti chiedi. perrchè mutate e recombine prima del prossimo coso da implementare'?? (( dove poi in verità dovrai guardare decoratore etc.
 # what does it mean with API lol.
 
+class ParticleSwarmOptimizer(MetaHeuristicsAlgorithm):
+    '''args
+    pop_size: integer. it is the size of the population
+    population: a list (or numpy array) of pop size ParticleCandidate
+    fitness func: a fitness function that takes as input a ParticleCandidate and returns a number
+
+    • n neighbors: an integer, the number of neighbors for each particle
+    • best: an array of ParticleCandidate instances of size pop size. For
+    each particle i, it must contain the position which gave the largest
+    fitness for that particle
+    • f itness best: a numpy array of floats, of size pop size. For each
+    particle i, it must contain the largest fitness value found so far for
+    that particle
+    • global best: a ParticleCandidate. It must contain the position that
+    gave the largest fitness value found so far
+    • global f itness best: a float. It must contain the largest fitness value
+    found so far
+
+    
+    '''
+    def __init__(self, fitness_func, pop_size: int, n_neighbors: int, **kwargs):
+        self.fitness_func = fitness_func
+        self.pop_size = pop_size
+        self.n_neighbors = n_neighbors
+        self.best = None
+        self.fitness_best = None
+        self.global_best = None
+        self.global_fitness_best = None
+        self.kwargs = kwargs
+
+
+            
+    def fit(self, n_iters):
+        # Initialize population
+        self.population = []
+        for i in range(self.pop_size):
+            new_particle = ParticleCandidate.generate(**self.kwargs)
+            self.population.append(new_particle)
+        
+        # Initialize tracking arrays
+        self.best = self.population.copy()
+        self.fitness_best = np.full(self.pop_size, -np.inf)
+        self.global_fitness_best = -np.inf
+        
+        # Main optimization loop
+        for iteration in range(n_iters):
+            # (a) Compute fitness for each particle
+            current_fitness = []
+            for i, particle in enumerate(self.population):
+                fitness = self.fitness_func(particle)
+                current_fitness.append(fitness)
+                
+                # (b) Update personal and global bests
+                if fitness > self.fitness_best[i]:
+                    self.fitness_best[i] = fitness
+                    self.best[i] = particle
+                    
+                if fitness > self.global_fitness_best:
+                    self.global_fitness_best = fitness
+                    self.global_best = particle
+            
+            # (c) Find neighborhood bests
+            best_neighbors = []
+            for i in range(self.pop_size):
+                possible_neighbors = list(range(self.pop_size))
+                possible_neighbors.remove(i)
+                neighbor_indices = np.random.choice(possible_neighbors, 
+                                                min(self.n_neighbors, len(possible_neighbors)), 
+                                                replace=False)
+                
+                best_neighbor_idx = neighbor_indices[np.argmax([self.fitness_best[j] for j in neighbor_indices])]
+                best_neighbors.append(self.best[best_neighbor_idx])
+            
+            # (d) Update velocities and positions
+            for i in range(self.pop_size):
+                updated_particle = self.population[i].recombine(self.best[i], best_neighbors[i], self.global_best)
+                self.population[i] = updated_particle.mutate()
+
+
+            

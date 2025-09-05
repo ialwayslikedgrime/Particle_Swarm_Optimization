@@ -54,23 +54,23 @@ class ParticleCandidate(FloatVectorCandidate):
                  wg: float =1/3):
         
 
-        lower_array = np.asarray(lower, dtype=float)
-        upper_array = np.asarray(upper, dtype=float)
-        candidate_array = np.asarray(candidate, dtype=float)
-        velocity_array = np.asarray(velocity, dtype=float)
+        lower= np.asarray(lower, dtype=float)
+        upper = np.asarray(upper, dtype=float)
+        candidate = np.asarray(candidate, dtype=float)
+        velocity = np.asarray(velocity, dtype=float)
 
         # Validate dimensions
-        if len(lower_array) != size or len(upper_array) != size:
+        if len(lower) != size or len(upper) != size:
             raise ValueError("Lower and upper bounds must have same length as size")
-        if len(candidate_array) != size or len(velocity_array) != size:
+        if len(candidate) != size or len(velocity) != size:
             raise ValueError("Candidate and velocity must have same length as size")
         
         # Validate bounds
-        if np.any(lower_array >= upper_array):
+        if np.any(lower >= upper):
             raise ValueError("All lower bounds must be strictly less than upper bounds")
         
         # Validate candidate within bounds
-        if np.any(candidate_array < lower_array) or np.any(candidate_array > upper_array):
+        if np.any(candidate < lower) or np.any(candidate > upper):
             raise ValueError("Candidate position must be within specified bounds")
         
         # Validate PSO weights
@@ -78,23 +78,18 @@ class ParticleCandidate(FloatVectorCandidate):
         if not np.isclose(wl + wn + wg, 1.0, rtol=1e-9):
             raise ValueError(f"PSO weights must sum to 1.0, got {wl + wn + wg}")
 
-        # Call parent constructor with dummy distribution (PSO doesn't use it)
+        # Initialize parent class (distribution required by softpy interface but unused in PSO)
         super().__init__(size=size,
-                         candidate=candidate_array,
-                         lower=lower_array,
-                         upper=upper_array,
-                         distribution=stats.uniform(loc=0, scale=0),  # we know the PSO doens't use distribution specifically to ?mutate?
-                         # yet we need to pass this parameter to stay consistent with the sofpy interface. 
-                         # could have used a class zero distribution that basically returned 0s. I will use this, so that if someone passes extra
-                         # arguments it won't crush.
-                         intermediate=False
-                         # mutate/recombine - I don't pass them. they are callable and I will ovverride them.
-                         )
+                         candidate=candidate,
+                         lower=lower,
+                         upper=upper,
+                         distribution=stats.uniform(loc=0, scale=0),
+                         intermediate=False)
 
         # Store PSO-specific attributes
-        self.velocity = velocity_array
+        self.velocity = velocity
         self.inertia = float(inertia)
-        self.wl, self.wn, self.wg = float(wl), float(wn), float(wg)
+        self.wl, self.wn, self.wg = wl, wn, wg
  
     @staticmethod # i guess, although there is not in the sofpy library maybe if u call class.name is not needed ?
     def generate(size: int, lower: np.ndarray, upper: np.ndarray) -> 'ParticleCandidate':
@@ -160,7 +155,11 @@ class ParticleCandidate(FloatVectorCandidate):
                                  self.lower,
                                  self.upper,
                                  self.candidate,
-                                 new_velocity)
+                                 new_velocity,
+                                 self.inertia,
+                                 self.wl,
+                                 self.wn,
+                                 self.wg)
 
 
 ## da qui. e ti chiedi. perrchè mutate e recombine prima del prossimo coso da implementare'?? (( dove poi in verità dovrai guardare decoratore etc.

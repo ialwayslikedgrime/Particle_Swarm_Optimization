@@ -151,31 +151,53 @@ class ParticleCandidate(FloatVectorCandidate):
 
 
 class ParticleSwarmOptimizer(MetaHeuristicsAlgorithm):
-    '''args
-    pop_size: integer. it is the size of the population
-    population: a list (or numpy array) of pop size ParticleCandidate
-    fitness func: a fitness function that takes as input a ParticleCandidate and returns a number
-
-    • n neighbors: an integer, the number of neighbors for each particle
-    • best: an array of ParticleCandidate instances of size pop size. For
-    each particle i, it must contain the position which gave the largest
-    fitness for that particle
-    • f itness best: a numpy array of floats, of size pop size. For each
-    particle i, it must contain the largest fitness value found so far for
-    that particle
-    • global best: a ParticleCandidate. It must contain the position that
-    gave the largest fitness value found so far
-    • global f itness best: a float. It must contain the largest fitness value
-    found so far
-
-    
     '''
+    Implementation of Particle Swarm Optimization inheriting from MetaHeuristicsAlgorithm.
+    
+    This class implements the PSO meta-heuristic algorithm maintaining a population
+    of particles that explore the search space based on personal, neighborhood, and global best positions.
+    
+    Parameters
+    ----------
+    :param fitness_func: fitness function that takes a ParticleCandidate and returns a number
+    :type fitness_func: Callable
+    
+    :param pop_size: the size of the population
+    :type pop_size: int
+    
+    :param n_neighbors: the number of neighbors for each particle
+    :type n_neighbors: int
+    
+    :param kwargs: additional parameters passed to ParticleCandidate.generate()
+    :type kwargs: dict
+    
+    Attributes
+    ----------
+    pop_size : int
+        The size of the population
+    population : list
+        List of ParticleCandidate instances of size pop_size
+    fitness_func : Callable
+        Fitness function that evaluates ParticleCandidate instances
+    n_neighbors : int
+        Number of neighbors for each particle
+    best : list
+        Array of ParticleCandidate instances storing personal best positions
+    fitness_best : np.ndarray
+        Array of floats storing personal best fitness values
+    global_best : ParticleCandidate
+        Position with the largest fitness value found so far
+    global_fitness_best : float
+        The largest fitness value found so far    
+    '''
+    
     def __init__(self, fitness_func, pop_size: int, n_neighbors: int, **kwargs):
         self.fitness_func = fitness_func
         self.pop_size = pop_size
         self.n_neighbors = n_neighbors
         self.best = None
         self.fitness_best = None
+        self.population = None
         self.global_best = None
         self.global_fitness_best = None
         self.kwargs = kwargs

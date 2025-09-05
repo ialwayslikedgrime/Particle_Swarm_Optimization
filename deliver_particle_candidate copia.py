@@ -91,7 +91,7 @@ class ParticleCandidate(FloatVectorCandidate):
         self.inertia = float(inertia)
         self.wl, self.wn, self.wg = wl, wn, wg
  
-    @staticmethod # i guess, although there is not in the sofpy library maybe if u call class.name is not needed ?
+    @staticmethod
     def generate(size: int, lower: np.ndarray, upper: np.ndarray) -> 'ParticleCandidate':
         candidate = np.random.uniform(lower, upper, size)
 
@@ -103,7 +103,7 @@ class ParticleCandidate(FloatVectorCandidate):
 
         return ParticleCandidate(size, lower, upper, candidate, velocity)
 
-    # i guess here we are makind the position update
+
     def mutate(self) -> 'ParticleCandidate':
         candidate = self.candidate + self.velocity
 
@@ -118,23 +118,10 @@ class ParticleCandidate(FloatVectorCandidate):
                                  inertia=self.inertia,
                                  wl=self.wl,
                                  wn=self.wn,
-                                 wg=self.wg)  # here i should consider wether adding some sort of constratint to not let the particles go wherever in the search space
+                                 wg=self.wg) 
 
     def recombine(self, local_best, neighborhood_best, best) -> 'ParticleCandidate':
-        # random vectors in [0,1]. scalar or vectors should both be acceptable
-        # we are generating vectors with random numbers between [0 included and 1 excluded]
-        # the number of dimensions of such vectors will be equals to size.
-        # in theory, in the book 1 was included. but apparently the standard is using np.random.rand anyway. could alternatively consider:
-
-        # rng = np.random.default_rng()
-        # rl = rng.integers(0, 2**53 + 1, size=self.size) / (2**53)  # float64 grid
-
-        # to make sure that the 1 is actually included.
-
-        # -----------------------------
-        # local_best, neighborhood_best, and best are all ParticleCandidate objects
-        # Each of them has a 'candidate' attribute (which is a numpy array)
-
+        # Generate random coefficients for PSO velocity update
         rl = np.random.rand(self.size)
         rn = np.random.rand(self.size)
         rg = np.random.rand(self.size)

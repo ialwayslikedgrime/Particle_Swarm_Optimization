@@ -48,41 +48,41 @@ class ParticleCandidate(FloatVectorCandidate):
                  upper: np.ndarray,
                  candidate: np.ndarray,
                  velocity: np.ndarray,
-                 inertia: float =0.729,  # added default value also such that it doesn't crush later in the generate method
+                 inertia: float = 0.729,  # added default value also such that it doesn't crush later in the generate method
                  wl: float =1/3,
                  wn: float =1/3,
                  wg: float =1/3):
         
 
-        self.lower = np.asarray(lower, dtype=float)
-        self.upper = np.asarray(upper, dtype=float)
+        lower_array = np.asarray(lower, dtype=float)
+        upper_array = np.asarray(upper, dtype=float)
         candidate_array = np.asarray(candidate, dtype=float)
         velocity_array = np.asarray(velocity, dtype=float)
 
         # Validate dimensions
-        if len(self.lower) != size or len(self.upper) != size:
+        if len(lower_array) != size or len(upper_array) != size:
             raise ValueError("Lower and upper bounds must have same length as size")
         if len(candidate_array) != size or len(velocity_array) != size:
             raise ValueError("Candidate and velocity must have same length as size")
-
+        
         # Validate bounds
-        if np.any(self.lower >= self.upper):
+        if np.any(lower_array >= upper_array):
             raise ValueError("All lower bounds must be strictly less than upper bounds")
-
+        
         # Validate candidate within bounds
-        if np.any(candidate_array < self.lower) or np.any(candidate_array > self.upper):
+        if np.any(candidate_array < lower_array) or np.any(candidate_array > upper_array):
             raise ValueError("Candidate position must be within specified bounds")
-
+        
         # Validate PSO weights
         wl, wn, wg = float(wl), float(wn), float(wg)
         if not np.isclose(wl + wn + wg, 1.0, rtol=1e-9):
-            raise ValueError(f"PSO weights wl + wn + wg must sum to 1.0, got {wl + wn + wg}")
+            raise ValueError(f"PSO weights must sum to 1.0, got {wl + wn + wg}")
 
         # Call parent constructor with dummy distribution (PSO doesn't use it)
         super().__init__(size=size,
                          candidate=candidate_array,
-                         lower=self.lower,
-                         upper=self.upper,
+                         lower=lower_array,
+                         upper=upper_array,
                          distribution=stats.uniform(loc=0, scale=0),  # we know the PSO doens't use distribution specifically to ?mutate?
                          # yet we need to pass this parameter to stay consistent with the sofpy interface. 
                          # could have used a class zero distribution that basically returned 0s. I will use this, so that if someone passes extra
@@ -95,10 +95,6 @@ class ParticleCandidate(FloatVectorCandidate):
         self.velocity = velocity_array
         self.inertia = float(inertia)
         self.wl, self.wn, self.wg = float(wl), float(wn), float(wg)
-
-        if not np.isclose(self.wl + self.wn + self.wg, 1.0):
-            raise ValueError("wl + wn + wg must equal 1.0")
-
  
     @staticmethod # i guess, although there is not in the sofpy library maybe if u call class.name is not needed ?
     def generate(size: int, lower: np.ndarray, upper: np.ndarray) -> 'ParticleCandidate':

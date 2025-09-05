@@ -48,7 +48,7 @@ class ParticleCandidate(FloatVectorCandidate):
                  upper: np.ndarray,
                  candidate: np.ndarray,
                  velocity: np.ndarray,
-                 inertia: float = 0.729,  # added default value also such that it doesn't crush later in the generate method
+                 inertia: float = 0.729,  # Standard PSO inertia weight
                  wl: float =1/3,
                  wn: float =1/3,
                  wg: float =1/3):
@@ -95,7 +95,6 @@ class ParticleCandidate(FloatVectorCandidate):
     def generate(size: int, lower: np.ndarray, upper: np.ndarray) -> 'ParticleCandidate':
         candidate = np.random.uniform(lower, upper, size)
 
-        # should probably insert a try/except here 
         span = np.abs(upper - lower)
         negative_span = -span
 
@@ -107,8 +106,10 @@ class ParticleCandidate(FloatVectorCandidate):
     def mutate(self) -> 'ParticleCandidate':
         candidate = self.candidate + self.velocity
 
+        # (not in the assignment)
         # Apply boundary constraints to keep particle within search space
-        # Using clipping to ensure particles don't leave the allowed region
+        # # Using clipping approach: particles that would move outside bounds
+        # are repositioned to the nearest boundary (conservative approach)
         candidate = np.clip(candidate, self.lower, self.upper)
         return ParticleCandidate(size=self.size,
                                  lower=self.lower,
@@ -190,7 +191,7 @@ class ParticleSwarmOptimizer(MetaHeuristicsAlgorithm):
     global_fitness_best : float
         The largest fitness value found so far    
     '''
-    
+
     def __init__(self, fitness_func, pop_size: int, n_neighbors: int, **kwargs):
         self.fitness_func = fitness_func
         self.pop_size = pop_size
@@ -203,8 +204,15 @@ class ParticleSwarmOptimizer(MetaHeuristicsAlgorithm):
         self.kwargs = kwargs
 
 
-            
-    def fit(self, n_iters):
+    def fit(self, n_iters: int) -> None:
+        """
+        Run the PSO optimization algorithm for a specified number of iterations.
+        
+        Parameters
+        ----------
+        n_iters : int
+            Number of iterations to run the optimization
+        """
         # Initialize population
         self.population = []
         for i in range(self.pop_size):

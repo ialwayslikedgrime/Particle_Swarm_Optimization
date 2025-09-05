@@ -149,8 +149,6 @@ class ParticleCandidate(FloatVectorCandidate):
                                  self.wg)
 
 
-## da qui. e ti chiedi. perrchè mutate e recombine prima del prossimo coso da implementare'?? (( dove poi in verità dovrai guardare decoratore etc.
-# what does it mean with API lol.
 
 class ParticleSwarmOptimizer(MetaHeuristicsAlgorithm):
     '''args

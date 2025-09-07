@@ -1,11 +1,35 @@
-# Python virtual environment
-.venv/
-venv/
-env/
 
-# Byte-compiled / cache
+
+
+# macOS
+.DS_Store
+
+# Python bytecode
 __pycache__/
 *.py[cod]
 
-gpt_particle_candidate.py
+# Virtual envs & secrets
+.venv/
+.env
+
+# Build / packaging
+build/
+dist/
+*.egg-info/
+
+# Tests / coverage
+.pytest_cache/
+.coverage*
+
+# Notebooks
+.ipynb_checkpoints/
+
+# Logs
+logs/
+*.log
+
+# Editor
+.vscode/
+
+
 test_particle.py

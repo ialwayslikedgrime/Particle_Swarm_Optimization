@@ -102,25 +102,15 @@ class ParticleCandidate(FloatVectorCandidate):
 
 
     def mutate(self) -> 'ParticleCandidate':
-        candidate = self.candidate + self.velocity
+        self.candidate = self.candidate + self.velocity
 
         # (not in the assignment)
         # Apply boundary constraints to keep particle within search space
         # # Using clipping approach: particles that would move outside bounds
         # are repositioned to the nearest boundary (conservative approach)
-        candidate = np.clip(candidate, self.lower, self.upper)
-        new_particle = ParticleCandidate(size=self.size,
-                                 lower=self.lower,
-                                 upper=self.upper,
-                                 candidate=candidate,
-                                 velocity=self.velocity)
-        
-        new_particle.inertia = self.inertia
-        new_particle.wl = self.wl
-        new_particle.wn = self.wn
-        new_particle.wg = self.wg
-        
-        return new_particle
+        self.candidate = np.clip(self.candidate, self.lower, self.upper)
+
+        return self
         
 
 
@@ -137,23 +127,12 @@ class ParticleCandidate(FloatVectorCandidate):
             + rn * self.wn * (self.candidate - neighborhood_best.candidate) \
             + rg * self.wg * (self.candidate - best.candidate) '''
         
-        new_velocity = (self.inertia * self.velocity) \
+        self.velocity = (self.inertia * self.velocity) \
             + rl * self.wl * (local_best.candidate - self.candidate) \
             + rn * self.wn * (neighborhood_best.candidate - self.candidate) \
             + rg * self.wg * (best.candidate - self.candidate)
-
-        new_particle = ParticleCandidate(self.size,
-                                 self.lower,
-                                 self.upper,
-                                 self.candidate,
-                                 new_velocity)
         
-        new_particle.inertia = self.inertia
-        new_particle.wl = self.wl
-        new_particle.wn = self.wn
-        new_particle.wg = self.wg
-        
-        return new_particle
+        return self
 
 
 

@@ -12,7 +12,11 @@ import importlib
 import importlib.util
 import numpy as np
 import matplotlib.pyplot as plt
-
+from pathlib import Path
+import re
+import argparse
+import itertools
+from datetime import datetime
 
 # ---------------------- dynamic import ----------------------
 def load_user_impl(arg):
@@ -42,6 +46,36 @@ def maybe(obj, method_name, *args, **kwargs):
     meth = getattr(obj, method_name)
     out = meth(*args, **kwargs)
     return obj if out is None else out
+
+# ---------------------- saving helpers ----------------------
+def _ensure_pictures_dir():
+    Path("pictures").mkdir(parents=True, exist_ok=True)
+
+def _next_test_index():
+    _ensure_pictures_dir()
+    maxn = 0
+    for p in Path("pictures").glob("test_*.png"):
+        m = re.match(r"test_(\d+)", p.stem)
+        if m:
+            maxn = max(maxn, int(m.group(1)))
+    return maxn + 1
+
+def _savefig_auto(fig, meta=None, prefix="test"):
+    """
+    Save `fig` into ./pictures as test_N[__k=v_...] .png
+    meta: dict of values you want embedded in the filename (numbers you used)
+    """
+    idx = _next_test_index()
+    suffix = ""
+    if meta:
+        # turn {k:v} into "__k=v_k2=v2"
+        parts = [f"{k}={v}" for k, v in meta.items()]
+        if parts:
+            suffix = "__" + "_".join(parts)
+    fname = f"{prefix}_{idx}{suffix}.png"
+    out = Path("pictures") / fname
+    fig.savefig(out, dpi=120, bbox_inches="tight")
+    print(f"✓ Saved: {out}")
 
 
 # ---------------------- tests ----------------------
@@ -226,7 +260,15 @@ class FitnessHistory:
         return f
 
 
-def visualize_rosenbrock(ParticleSwarmOptimizer):
+def visualize_rosenbrock(ParticleSwarmOptimizer,
+                         pop_size=30,
+                         n_neighbors=5,
+                         n_iters=100,
+                         lower=None,
+                         upper=None,
+                         snapshot_every=5,
+                         tag=None,
+                         seed=None):
     print("\n[VISUALIZATION] Rosenbrock 2D (no PSO override)\n" + "-" * 40)
 
     # Rosenbrock; return negative to maximize
@@ -234,26 +276,31 @@ def visualize_rosenbrock(ParticleSwarmOptimizer):
         x, y = p.candidate[0], p.candidate[1]
         return -((1 - x) ** 2 + 100 * (y - x ** 2) ** 2)
 
-    pop_size = 20
-    recorder = FitnessHistory(rosen, pop_size=pop_size, snapshot_every=5)
+    lower = np.array([-2.0, -2.0]) if lower is None else np.asarray(lower, dtype=float)
+    upper = np.array([ 2.0,  2.0]) if upper is None else np.asarray(upper, dtype=float)
+
+    if seed is not None:
+        np.random.seed(int(seed))
+
+    recorder = FitnessHistory(rosen, pop_size=int(pop_size), snapshot_every=int(snapshot_every))
 
     opt = ParticleSwarmOptimizer(
         fitness_func=recorder,   # <-- ONLY wrapping, not changing PSO
-        pop_size=pop_size,
-        n_neighbors=5,
+        pop_size=int(pop_size),
+        n_neighbors=int(n_neighbors),
         size=2,
-        lower=np.array([-2.0, -2.0]),
-        upper=np.array([2.0, 2.0]),
+        lower=lower,
+        upper=upper,
     )
-    opt.fit(n_iters=100)
+    opt.fit(n_iters=int(n_iters))
 
     # Plot snapshots
     fig, axes = plt.subplots(2, 3, figsize=(15, 10))
     fig.suptitle("PSO Optimization Progress on Rosenbrock Function", fontsize=16)
     snaps = [0, 2, 4, 6, 8, -1]
 
-    X = np.linspace(-2, 2, 200)
-    Y = np.linspace(-2, 2, 200)
+    X = np.linspace(lower[0], upper[0], 200)
+    Y = np.linspace(lower[1], upper[1], 200)
     XX, YY = np.meshgrid(X, Y)
     ZZ = (1 - XX) ** 2 + 100 * (YY - XX ** 2) ** 2
 
@@ -263,37 +310,81 @@ def visualize_rosenbrock(ParticleSwarmOptimizer):
             data = recorder.history[h]
             P = data["positions"]
             ax.contour(XX, YY, ZZ, levels=np.logspace(-1, 3, 20), alpha=0.3)
-            ax.scatter(P[:, 0], P[:, 1], c="red", s=30, alpha=0.7)
+            ax.scatter(P[:, 0], P[:, 1], s=30, alpha=0.7)
             if data["global_best"] is not None:
                 ax.scatter(data["global_best"][0], data["global_best"][1],
-                           c="yellow", s=100, marker="*", edgecolors="black", linewidth=2)
-            ax.scatter(1, 1, c="green", s=100, marker="D", edgecolors="black", linewidth=2)
+                           s=100, marker="*", edgecolors="black", linewidth=2)
+            ax.scatter(1, 1, s=100, marker="D", edgecolors="black", linewidth=2)
             ax.set_title(f"Iteration {data['iteration']}")
-            ax.set_xlim(-2, 2); ax.set_ylim(-2, 2)
+            ax.set_xlim(lower[0], upper[0]); ax.set_ylim(lower[1], upper[1])
             ax.set_xlabel("X"); ax.set_ylabel("Y")
 
     plt.tight_layout()
-    plt.savefig("pso_optimization_progress.png", dpi=120, bbox_inches="tight")
-    print("✓ Saved: pso_optimization_progress.png")
+
+    # Save with meta
+    meta = {
+        "pop": int(pop_size),
+        "nei": int(n_neighbors),
+        "iters": int(n_iters),
+        "low": f"[{lower[0]:.1f},{lower[1]:.1f}]",
+        "up":  f"[{upper[0]:.1f},{upper[1]:.1f}]",
+        "snap": int(snapshot_every),
+    }
+    if seed is not None:
+        meta["seed"] = int(seed)
+    if tag:
+        meta["tag"] = str(tag)
+
+    _savefig_auto(fig, meta=meta, prefix="test")
     print(f"Final best (from optimizer): {opt.global_best.candidate}")
     print(f"Error vs [1,1]: {np.linalg.norm(opt.global_best.candidate - np.array([1.0, 1.0])):.4f}")
-    plt.show()
+    plt.close(fig)
     return True
 
-
 # ---------------------- main ----------------------
+
+
+def _parse_list(s, cast=float):
+    # accepts "a,b,c" -> [cast(a), cast(b), cast(c)]
+    if s is None: return None
+    return [cast(x.strip()) for x in s.split(",") if x.strip()]
+
 def main():
     if len(sys.argv) < 2:
-        print("Usage: python pso_test.py <module_name | path/to/file.py>")
+        print("Usage: python pso_test.py <module_name | path/to/file.py> [options]")
+        print("Examples:")
+        print("  python pso_test.py my_impl.py --pop 30,50 --nei 5,10 --iters 100,200 --tag baseline")
         sys.exit(1)
 
-    ParticleCandidate, ParticleSwarmOptimizer, module = load_user_impl(sys.argv[1])
+    # First argument is module path/name; the rest are options
+    module_arg = sys.argv[1]
+    arglist = sys.argv[2:]
+
+    ParticleCandidate, ParticleSwarmOptimizer, module = load_user_impl(module_arg)
     print("=" * 60)
     print(f"Testing PSO implementation from: {module.__name__}")
     print("=" * 60)
 
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument("--pop", type=str, default=None, help="Comma-separated pop sizes")
+    parser.add_argument("--nei", type=str, default=None, help="Comma-separated neighbor counts")
+    parser.add_argument("--iters", type=str, default=None, help="Comma-separated iteration counts")
+    parser.add_argument("--lower", type=str, default=None, help='Comma-separated lower bounds, e.g. "-2,-2"')
+    parser.add_argument("--upper", type=str, default=None, help='Comma-separated upper bounds, e.g. "2,2"')
+    parser.add_argument("--snap", type=str, default=None, help="Comma-separated snapshot_every values")
+    parser.add_argument("--seed", type=str, default=None, help="Comma-separated seeds")
+    parser.add_argument("--tag", type=str, default=None, help="Free text to tag the run(s)")
+    parser.add_argument("--helpme", action="store_true", help="Show options")
+    # parse only arglist so the module path is untouched
+    opts, _ = parser.parse_known_args(arglist)
+
+    if opts.helpme:
+        parser.print_help()
+        sys.exit(0)
+
     np.random.seed(0)  # reproducible tests (doesn't alter your logic)
 
+    # ---------------------- run tests (unchanged) ----------------------
     tests = [
         lambda: test_particle_initialization(ParticleCandidate),
         lambda: test_generate(ParticleCandidate),
@@ -301,14 +392,41 @@ def main():
         lambda: test_optimizer_on_sphere(ParticleCandidate, ParticleSwarmOptimizer),
         lambda: test_formula_direction(ParticleCandidate),
     ]
-
     passed = failed = 0
     for t in tests:
         ok = t()
         passed += int(ok)
         failed += int(not ok)
 
-    visualize_rosenbrock(ParticleSwarmOptimizer)
+    # ---------------------- build sweep lists ----------------------
+    pops  = _parse_list(opts.pop,  int) or [30]
+    neis  = _parse_list(opts.nei,  int) or [5]
+    iters = _parse_list(opts.iters, int) or [100]
+    snaps = _parse_list(opts.snap, int) or [5]
+    seeds = _parse_list(opts.seed, int) or [None]
+
+    lower = _parse_list(opts.lower, float)
+    upper = _parse_list(opts.upper, float)
+    if lower is not None and len(lower) != 2:
+        raise ValueError("--lower must have exactly 2 numbers, e.g. -2,-2")
+    if upper is not None and len(upper) != 2:
+        raise ValueError("--upper must have exactly 2 numbers, e.g. 2,2")
+
+    # ---------------------- sweep & save ----------------------
+    print("\n[SWEEP] Generating visualizations...")
+    for pop, nei, itn, snap, seed in itertools.product(pops, neis, iters, snaps, seeds):
+        print(f" -> pop={pop}, nei={nei}, iters={itn}, snap={snap}, seed={seed}, tag={opts.tag}")
+        visualize_rosenbrock(
+            ParticleSwarmOptimizer,
+            pop_size=pop,
+            n_neighbors=nei,
+            n_iters=itn,
+            lower=lower,
+            upper=upper,
+            snapshot_every=snap,
+            tag=opts.tag,
+            seed=seed,
+        )
 
     print("\n" + "=" * 60)
     print("TEST SUMMARY")
@@ -317,6 +435,18 @@ def main():
     print(f"Failed: {failed}/{len(tests)}")
     print("=" * 60)
 
-
 if __name__ == "__main__":
     main()
+
+
+
+"""
+ran this commands:
+python test.py particle_candidate.py
+
+	•	Try two pop sizes × two neighbor counts × two iters (8 images):
+python test.py particle_candidate.py --pop 30,50 --nei 5,10 --iters 100,200
+
+	•	Also vary snapshot stride & seeds:
+python test.py particle_candidate.py --pop 40 --snap 5,10 --seed 1,2,3
+"""

@@ -232,7 +232,6 @@ class ParticleSwarmOptimizer(MetaHeuristicsAlgorithm):
         # We must deep copy particles to preserve their initial states
         # as personal bests, since particles will be modified in place
         self.best = [copy.deepcopy(particle) for particle in self.population]
-        
         self.fitness_best = np.full(self.pop_size, -np.inf) # Initialized with -np.inf: keeps dtype=float and allows direct numeric comparisons
         self.global_fitness_best = -np.inf
         self.global_best = None
@@ -263,19 +262,26 @@ class ParticleSwarmOptimizer(MetaHeuristicsAlgorithm):
             # (c) Find neighborhood bests
             best_neighbors = []
             for i in range(self.pop_size):
-                # Create list of all other particles (excluding self)
-                possible_neighbors = list(range(self.pop_size))
-                possible_neighbors.remove(i)
 
-                # Randomly select n_neighbors from other particles
-                # Using min() to handle edge case where n_neighbors > pop_size - 1
-                neighbor_indices = np.random.choice(possible_neighbors, 
-                                                min(self.n_neighbors, len(possible_neighbors)), 
-                                                replace=False)
-            
-                best_neighbor_idx = neighbor_indices[np.argmax([self.fitness_best[j] for j in neighbor_indices])]
-                best_neighbors.append(self.best[best_neighbor_idx])
-            
+                if self.n_neighbors == 0:
+                    # When no neighbors, use global best for neighborhood component
+                    # This maintains the three-component velocity update structure
+                    best_neighbors.append(self.global_best if self.global_best is not None 
+                                        else self.best[i])
+                else:
+                    # Create list of all other particles (excluding self)
+                    possible_neighbors = list(range(self.pop_size))
+                    possible_neighbors.remove(i)
+
+                    # Randomly select n_neighbors from other particles
+                    # Using min() to handle edge case where n_neighbors > pop_size - 1
+                    neighbor_indices = np.random.choice(possible_neighbors, 
+                                                    min(self.n_neighbors, len(possible_neighbors)), 
+                                                    replace=False)
+                
+                    best_neighbor_idx = neighbor_indices[np.argmax([self.fitness_best[j] for j in neighbor_indices])]
+                    best_neighbors.append(self.best[best_neighbor_idx])
+                    
             # (d) Update velocities and positions
             for i in range(self.pop_size):
                 # Update velocity based on personal, neighborhood, and global bests

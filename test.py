@@ -302,7 +302,7 @@ def visualize_rosenbrock(ParticleSwarmOptimizer,
             data = recorder.history[h]
             P = data["positions"]
             ax.contour(XX, YY, ZZ, levels=np.logspace(-1, 3, 20), alpha=0.3)
-            ax.scatter(P[:, 0], P[:, 1], s=30, alpha=0.7)
+            ax.scatter(P[:, 0], P[:, 1], s=30, alpha=0.7, color = "red")
             if data["global_best"] is not None:
                 ax.scatter(data["global_best"][0], data["global_best"][1],
                            s=100, marker="*", edgecolors="black", linewidth=2)

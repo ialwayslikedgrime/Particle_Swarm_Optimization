@@ -1,11 +1,3 @@
-"""
-PSO Test Harness — uses the user's own ParticleCandidate & ParticleSwarmOptimizer.
-
-Usage:
-  python pso_test.py my_impl.py
-  python pso_test.py my_impl
-"""
-
 import sys
 import time
 import importlib

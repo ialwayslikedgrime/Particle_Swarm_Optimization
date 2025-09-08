@@ -10,6 +10,7 @@ Implementation of **Particle Swarm Optimization (PSO)** consistent with the [`so
 - **OOP & Design Patterns**: subclassed `FloatVectorCandidate` and applied the Factory Method.  
 - **Metaheuristics**: applied swarm intelligence concepts (personal, local, global bests).  
 - **Numerical Computing**: vectorized with NumPy, handled boundaries, and ensured reproducibility.  
+- **Algorithm Engineering**: managed in-place state updates using deep copies to preserve best positions.  
 - **Testing**: verified correctness on benchmark functions (Sphere, Rosenbrock).  
 
 ---
@@ -24,10 +25,34 @@ Particles (red) converge toward the global optimum (star) as iterations progress
 
 ---
 
+
 ## Quick Start
 
+### Option A — Minimal demo
 ```bash
 pip install -r requirements.txt
-
-python test.py particle_candidate.py
+python run_demo.py
 ```
+
+## Option B — Full test harness + visualizations
+
+Use the harness to run tests and generate optimization plots:
+
+```bash
+python test.py my_impl.py --pop 50 --nei 10 --iters 100
+```
+
+	•	--pop: population size (number of particles)
+	•	--nei: number of neighbors considered for each particle
+	•	--iters: number of iterations (steps)
+
+Example: sweep over multiple configurations in one run:
+```bash
+python test.py my_impl.py --pop 30,50 --nei 5,10 --iters 100,200
+```
+
+This will run PSO with:
+	•	2 different population sizes (30, 50)
+	•	2 different neighborhood sizes (5, 10)
+	•	2 iteration counts (100, 200)
+→ creating a total of 8 runs and saving plots in the pictures/ folder.

@@ -52,7 +52,11 @@ python test.py my_impl.py --pop 30,50 --nei 5,10 --iters 100,200
 ```
 
 This will run PSO with:
+
 	•	2 different population sizes (30, 50)
+
 	•	2 different neighborhood sizes (5, 10)
+
 	•	2 iteration counts (100, 200)
+    
 → creating a total of 8 runs and saving plots in the pictures/ folder.

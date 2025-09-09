@@ -4,7 +4,18 @@ Implementation of **Particle Swarm Optimization (PSO)** consistent with the soft
 
 ---
 
-## Highlights
+## Architecture & Design
+
+**Library Integration**
+- Extends Softpy's `FloatVectorCandidate` and `MetaHeuristicsAlgorithm` abstract base classes
+- Maintains API consistency with existing Softpy optimization algorithms
+- Implements required interface methods (`mutate()`, `recombine()`, `generate()`)
+
+**Design Patterns**
+- Factory Method: `ParticleCandidate.generate()` creates instances with proper initialization
+- Template Method: Inherits optimization workflow from `MetaHeuristicsAlgorithm`
+- State preservation through deep copy mechanics for best position tracking
+
 
 - **Implemented from scratch**: particle dynamics, velocity updates, and swarm evolution.  
 - **OOP & Design Patterns**: subclassed `FloatVectorCandidate` and applied the Factory Method.  

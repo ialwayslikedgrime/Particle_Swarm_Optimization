@@ -17,6 +17,8 @@ Implementation of **Particle Swarm Optimization (PSO)** consistent with the soft
 - State preservation through deep copy mechanics for best position tracking
 
 
+
+## Implementation Highlights  
 - **Implemented from scratch**: particle dynamics, velocity updates, and swarm evolution.  
 - **OOP & Design Patterns**: subclassed `FloatVectorCandidate` and applied the Factory Method.  
 - **Metaheuristics**: applied swarm intelligence concepts (personal, local, global bests).  

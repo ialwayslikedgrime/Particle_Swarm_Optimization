@@ -1,6 +1,6 @@
 # Particle Swarm Optimization (PSO)
 
-Implementation of **Particle Swarm Optimization (PSO)** consistent with the [`softpy`](https://github.com/andreacampagner/softpy) library, developed as part of the *Fuzzy Systems & Evolutionary Computing* course (A.Y. 2024/2025, UniMiB).  
+Implementation of **Particle Swarm Optimization (PSO)** consistent with the softpy library.
 
 ---
 
@@ -77,3 +77,5 @@ This will run PSO with:
 └── .gitignore
 
 ```
+
+Done by me, Stella Andorno (ialwayslikedgrime)
